@@ -17,9 +17,7 @@ routes = yaml.load(open(CURRENT_DIR / "routes.yaml", "r"), Loader=yaml.FullLoade
 
 # sets the global root path domain.com/
 if routes.get("root"):
-    paths.update({
-        '/': {'controller_name': routes.get("root")}
-    })
+    paths.update({"/": {"controller_name": routes.get("root")}})
 
 resources = routes.get("resources")
 tweaks = routes.get("tweaks")
@@ -29,37 +27,37 @@ path_tweaks = tweaks.get("path")
 for key, value in controller_tweaks.items():
     # Basically, reads and formats tweaks.controller from routes.yaml
     if type(value) is str:
-        paths.update({
-            f"/{value}": {'controller_name': key}
-        })
+        paths.update({f"/{value}": {"controller_name": key}})
     elif type(value) is dict:
         path = value.get("path")
         allowed_methods = value.get("allowed_methods")
-        paths.update({
-            f"{path}": {
-                'controller_name': key,
-                "allowed_methods": allowed_methods
-            },
-        })
+        paths.update(
+            {
+                f"{path}": {"controller_name": key, "allowed_methods": allowed_methods},
+            }
+        )
 
 for key, value in path_tweaks.items():
     # Reads and formats tweaks.path from routes.yaml
     # Basically, it's a way to add custom paths to the routes
     # without having to create a specific controller for it.
-    paths.update({
-        f"{key}": {'controller_name': value.get("controller")}
-    })
+    paths.update({f"{key}": {"controller_name": value.get("controller")}})
 
 if resources:
     for resource in resources:
         try:
             # check if the controller exists
             excluded_directories = {"__pycache__", "templates", "__init__.py"}
-            controllers_dir = [x for x in os.listdir(os.path.join(CONTROLLERS_ROOT, resource)) if
-                               x not in excluded_directories]
+            controllers_dir = [
+                x
+                for x in os.listdir(os.path.join(CONTROLLERS_ROOT, resource))
+                if x not in excluded_directories
+            ]
 
             for controller_file in controllers_dir:
-                no_extension_controller_file_name = re.sub(r'\.py$', '', controller_file)
+                no_extension_controller_file_name = re.sub(
+                    r"\.py$", "", controller_file
+                )
                 controller_name = f"{resource}.{no_extension_controller_file_name}"
 
                 # check if controller_name is in tweaks.controller, and unique path is set, if so, don't add it
@@ -68,19 +66,16 @@ if resources:
                         continue
 
                 path = f"/{resource}/{no_extension_controller_file_name}"
-                paths.update(
-                    {
-                        path: {
-                            'controller_name': controller_name
-                        }
-                    }
-                )
+                paths.update({path: {"controller_name": controller_name}})
         except FileNotFoundError as e:
             print(f"{LOG_COLOR.FAIL}FileNotFoundError: {e}{LOG_COLOR.ENDC}")
             print(
-                f"{LOG_COLOR.WARNING}Please create a directory named '{resource}' in '{CONTROLLERS_ROOT}' directory.{LOG_COLOR.ENDC}")
+                f"{LOG_COLOR.WARNING}Please create a directory named '{resource}' in '{CONTROLLERS_ROOT}' directory.{LOG_COLOR.ENDC}"
+            )
 
 # print paths as table
-print(f"{LOG_COLOR.OK_CYAN}{'Path':<20}{'Controller':<20}{'Allowed Methods'}{LOG_COLOR.ENDC}")
+print(
+    f"{LOG_COLOR.OK_CYAN}{'Path':<20}{'Controller':<20}{'Allowed Methods'}{LOG_COLOR.ENDC}"
+)
 for key, value in paths.items():
     print(f"{key:<20}{value.get('controller_name'):<20}{value.get('allowed_methods')}")
